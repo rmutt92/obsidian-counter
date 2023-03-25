@@ -75,7 +75,7 @@ The simple way is to set the `fundingUrl` field to your link in your `manifest.j
 
 ```json
 {
-    "fundingUrl": "https://buymeacoffee.com"
+    "fundingUrl": "https://www.buymeacoffee.com/rmutt1992m"
 }
 ```
 
