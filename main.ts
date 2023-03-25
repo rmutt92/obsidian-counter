@@ -283,7 +283,7 @@ export default class Counter extends Plugin {
 			const beforeMetadata = content.substring(0, metadataStart);
 			const afterMetadata = content.substring(metadataEnd);
 
-			let new_content = beforeMetadata + metadataName + newValue + metadata_end + afterMetadata;
+			const new_content = beforeMetadata + metadataName + newValue + metadata_end + afterMetadata;
 			this.app.vault.modify(file, new_content);
 
 			return true
