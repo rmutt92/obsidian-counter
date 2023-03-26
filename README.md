@@ -51,4 +51,4 @@ Once the frontmatter is added, the plugin will automatically track the number of
 The Counter plugin is open source and contributions are welcome. If you would like to contribute, please submit a pull request with your changes.
 
 
-[☕️]("https://www.buymeacoffee.com/rmutt1992m")
+[☕️](https://www.buymeacoffee.com/rmutt1992m)
