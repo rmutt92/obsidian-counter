@@ -38,9 +38,9 @@ To use the Counter plugin, simply open any note and add the following YAML front
 
 ```
 ---
-views: 
-edits:
-words: 
+views: 1
+edits: [2023-03-26]
+words: 0
 ---
 ```
 
