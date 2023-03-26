@@ -1,4 +1,4 @@
-import { App, Editor, EditorChange, MarkdownView, Modal, Notice, Menu, Plugin, PluginSettingTab, Setting, parseYaml, stringifyYaml, TFile } from 'obsidian';
+import { App, Editor, MarkdownView, Notice, Plugin, PluginSettingTab, Setting, parseYaml } from 'obsidian';
 
 interface CounterMode {
 	title: string,
@@ -108,7 +108,7 @@ export default class Counter extends Plugin {
 		const content = await this.app.vault.read(file);
 		if (!content) return;
 
-		if (this.updateYamlFrontMatter(content, mode)) {
+		if (await this.updateYamlFrontMatter(mode)) {
 			this.last_update = { name: mode.name, file_path: file.path }
 		}
 
@@ -140,7 +140,7 @@ export default class Counter extends Plugin {
 
 
 	private findModes(trigger: string): CounterMode[] {
-		let res = [];
+		const res = [];
 
 		const allModes = [this.settings.counterModeList, this.settings.customCounterModeList].flat();
 		for (const key in allModes) {
@@ -157,9 +157,7 @@ export default class Counter extends Plugin {
 		return activeLeaf.editor;
 	}
 
-	private async updateYamlFrontMatter(mode: CounterMode): boolean {
-
-		console.log('-----------');
+	private async updateYamlFrontMatter(mode: CounterMode): Promise<boolean> {
 
 		const file = await this.app.workspace.getActiveFile();
 		if (!file) return false;
@@ -188,58 +186,41 @@ export default class Counter extends Plugin {
 		if (!editor) return false;
 
 		const cursorPos = editor.getCursor('head');
-		console.log("cursorPos: ", cursorPos);
 		const lines = match ? match[1].split('\n') : [''];
 		const yamlLinesLen = firstLinePos + lines.length + 2;
 
-		console.log("yamlLinesLen: ", yamlLinesLen);
-
 		if (cursorPos.line < yamlLinesLen) return false;
 
-		console.log(editor);
 		// const fileManager = this.app.fileManager;
 
-		function updateFrontmatter(new_value: any) {
+		function updateFrontmatter(new_value: string) {
 
-			console.log("match: ", match);
-			if (match)
-				console.log(" match[1]: ", match[1]);
 			const lines = match ? match[1].split('\n') : [''];
-
-			console.log("metadata_name: ", metadata_name);
-			console.log("metadataExists: ", metadataExists);
 
 			if (metadataExists) {
 				let line_pos = -1;
-				let line_end_pos = -1;
+				// let line_end_pos = -1;
 
 				for (let i = 0, size = lines.length; i < size; i++) {
 					const line = lines[i];
 
-					console.log("line: ", line);
-					console.log("line.indexOf(metadata_name + ':'): ", line.indexOf(metadata_name + ':'));
 					if (line.indexOf(metadata_name + ':') != 0) continue;
 
-					for (let j = i + 1, size = lines.length; j < size; j++) {
-						if (line_pos < 0) {
-							const line2 = lines[j];
-							const comma_pos = line2.indexOf(': ');
+					// for (let j = i + 1, size = lines.length; j < size; j++) {
+					// 	if (line_pos < 0) {
+					// 		const line2 = lines[j];
+					// 		const comma_pos = line2.indexOf(': ');
 
-							if (comma_pos > 0 && !line.substring(0, comma_pos).includes(' ')) {
-								// Next metadata found
-								line_end_pos = j;
-							}
-						}
-					}
+					// 		if (comma_pos > 0 && !line.substring(0, comma_pos).includes(' ')) {
+					// 			// Next metadata found
+					// 			line_end_pos = j;
+					// 		}
+					// 	}
+					// }
 
 					line_pos = i;
 
-					const next_metadata_found = line_end_pos > -1;
-					console.log("lines.length: ", lines.length);
-					console.log("line.length: ", line.length);
-					console.log("line_pos: ", line_pos);
-					console.log("line_end_pos: ", line_end_pos);
-					console.log("next_metadata_found: ", next_metadata_found);
+					// const next_metadata_found = line_end_pos > -1;
 
 					const rangeFrom = { line: line_pos + 1, ch: 0 };
 					const rangeTo = { line: line_pos + 2, ch: 0 };
@@ -247,39 +228,27 @@ export default class Counter extends Plugin {
 
 					// editor.replaceRange(metadata_name + ': ' + new_value, rangeFrom, rangeTo);d
 
-					console.log(new_value);
-					console.log("rangeFrom: ", rangeFrom);
-					console.log("rangeTo: ", rangeTo);
-
-					const new_line =  metadata_name + ': ' + new_value + '\n';
-
-					console.log("new_line: ", new_line);
+					const new_line = metadata_name + ': ' + new_value + '\n';
 
 					// make sure that they are considered one change so that undo will only need to happen once for a multicursor paste
 					if (editor) editor.replaceRange(new_line, rangeFrom, rangeTo);
 					return;
 				}
-			} else {
-				const insertPos = yamlLinesLen - 1;
-				const rangeFrom = { line: insertPos, ch: 0 };
-				const rangeTo = { line: insertPos + 1, ch: 0 };
-				// const rangeTo = next_metadata_found ? { line: line_end_pos+1, ch: 0} : { line: line_pos+2, ch: 0 };
+			} 
+			// else {
+			// 	const insertPos = yamlLinesLen - 1;
+			// 	const rangeFrom = { line: insertPos, ch: 0 };
+			// 	const rangeTo = { line: insertPos + 1, ch: 0 };
+			// 	// const rangeTo = next_metadata_found ? { line: line_end_pos+1, ch: 0} : { line: line_pos+2, ch: 0 };
 
-				// editor.replaceRange(metadata_name + ': ' + new_value, rangeFrom, rangeTo);d
+			// 	// editor.replaceRange(metadata_name + ': ' + new_value, rangeFrom, rangeTo);d
+			// 	const new_line = metadata_name + ': ' + new_value + '\n---\n';
 
-				console.log(new_value);
-				console.log("rangeFrom: ", rangeFrom);
-				console.log("rangeTo: ", rangeTo);
+			// 	// make sure that they are considered one change so that undo will only need to happen once for a multicursor paste
+			// 	// W.I.P It doesn't work properly
+			// 	// if (editor) editor.replaceRange(new_line, rangeFrom, rangeTo);
 
-				const new_line =  metadata_name + ': ' + new_value + '\n---\n';
-
-				console.log("new_line: ", new_line);
-
-				// make sure that they are considered one change so that undo will only need to happen once for a multicursor paste
-				// W.I.P It doesn't work properly
-				// if (editor) editor.replaceRange(new_line, rangeFrom, rangeTo);
-
-			}
+			// }
 
 			// try {
 			// 	fileManager.processFrontMatter(file, (frontmatter) => {
@@ -297,14 +266,12 @@ export default class Counter extends Plugin {
 			return yaml[metadata_name];
 		}
 
-		function arraysEqual(a: any[], b: any[]) {
+		function arraysEqual(a: string[], b: string[]) {
 			if (a.length !== b.length) return false;
 			return a.every((element, index) => element === b[index] && index === b.indexOf(element));
 		}
 
 		const current_value = await readFrontmatter();
-		console.log("yaml:", yaml)
-		console.log("TEST:", current_value)
 
 		let sucsess = false;
 
@@ -334,8 +301,8 @@ export default class Counter extends Plugin {
 
 				if (current_value != null) {
 					current_arr = [current_value].flat();
-					const current_dates = [...new Set(current_value)]
-					current_dates.sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+					const current_dates = [...new Set(current_value)] as string[];
+					current_dates.sort((a: string, b: string) => new Date(a).getTime() - new Date(b).getTime());
 
 					if (current_dates.includes(currentDate) && arraysEqual(current_dates, current_arr)) return false;
 				}
