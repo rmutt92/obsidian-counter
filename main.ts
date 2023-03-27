@@ -80,7 +80,7 @@ export default class Counter extends Plugin {
 		}
 
 		this.app.workspace.on('file-open', () => { this.updateCounter('Open File'); })
-		this.registerEvent(this.app.vault.on('modify', () => { this.updateCounter('modify'); }));
+		this.registerEvent(this.app.vault.on('modify', () => { this.updateCounter('Modify'); }));
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new CounterSettingTab(this.app, this));
