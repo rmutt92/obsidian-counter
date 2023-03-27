@@ -15,7 +15,7 @@ interface CounterSettings {
 	customCounterModeList: CounterMode[];
 }
 
-const counterTriggerList = ['file-open', 'editor-change', 'command'];
+const counterTriggerList = ['Open File', 'Modify', 'Command'];
 const counterTypeList = ['count_up', 'count_down', 'add_date', 'word_count'];
 
 const DEFAULT_SETTINGS: CounterSettings = {
@@ -23,7 +23,7 @@ const DEFAULT_SETTINGS: CounterSettings = {
 		{
 			title: 'View Counter',
 			name: 'views',
-			trigger: 'file-open',
+			trigger: 'Open File',
 			type: 'count_up',
 			auto: true,
 			create: false,
@@ -32,7 +32,7 @@ const DEFAULT_SETTINGS: CounterSettings = {
 		{
 			title: 'Edit Date Logger',
 			name: 'edits',
-			trigger: 'editor-change',
+			trigger: 'Modify',
 			type: 'add_date',
 			auto: true,
 			create: false,
@@ -41,7 +41,7 @@ const DEFAULT_SETTINGS: CounterSettings = {
 		{
 			title: 'Word Counter',
 			name: 'words',
-			trigger: 'editor-change',
+			trigger: 'Modify',
 			type: 'word_count',
 			auto: true,
 			create: false,
@@ -53,7 +53,7 @@ const DEFAULT_SETTINGS: CounterSettings = {
 		{
 			title: 'Rating Logger',
 			name: 'ratings',
-			trigger: 'command',
+			trigger: 'Command',
 			type: 'count_up',
 			auto: false,
 			create: false,
@@ -65,7 +65,7 @@ const DEFAULT_SETTINGS: CounterSettings = {
 export default class Counter extends Plugin {
 	settings: CounterSettings;
 
-	private readonly triggerList = ['file-open', 'editor-change'];
+	private readonly triggerList = ['Open File', 'editor-change'];
 
 	private last_update = { name: '', file_path: '' };
 
@@ -74,10 +74,13 @@ export default class Counter extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		for (const key in this.triggerList) {
-			const trigger = this.triggerList[key];
+		for (const key in counterTriggerList) {
+			const trigger = counterTriggerList[key];
 			this.app.workspace.on(trigger as "quit", async () => { this.updateCounter(trigger); })
 		}
+
+		this.app.workspace.on('file-open', () => { this.updateCounter('Open File'); })
+		this.registerEvent(this.app.vault.on('modify', () => { this.updateCounter('modify'); }));
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new CounterSettingTab(this.app, this));
@@ -87,7 +90,7 @@ export default class Counter extends Plugin {
 
 		for (const key in allModes) {
 			const mode = allModes[key];
-			if (mode.trigger != 'command') continue;
+			if (mode.trigger != 'Command') continue;
 
 			this.addCommand({
 				id: 'counter-' + mode.name,
@@ -97,22 +100,30 @@ export default class Counter extends Plugin {
 				}
 			});
 		}
+
+
+		// const saveCommandDefinition = (this.app as any).commands?.commands?.[ 'editor:save-file' ];
+		
+		// const save = saveCommandDefinition?.callback;
+
+		// if (typeof save === 'function') {
+		// 	saveCommandDefinition.callback = () => {  this.updateCounter('save-file'); };
+		// }
+
 	}
 
 	async updateCounterCommand(mode: CounterMode) {
-		const update_time = new Date();
-		if (update_time.getTime() - this.last_update_time.getTime() < 100) return;
+		// const update_time = new Date();
+		// if (update_time.getTime() - this.last_update_time.getTime() < 100) return;
 
 		const file = await this.app.workspace.getActiveFile();
 		if (!file) return;
-		const content = await this.app.vault.read(file);
-		if (!content) return;
-
+		
 		if (await this.updateYamlFrontMatter(mode)) {
 			this.last_update = { name: mode.name, file_path: file.path }
 		}
 
-		this.last_update_time = new Date();
+		// this.last_update_time = new Date();
 	}
 
 
@@ -120,8 +131,8 @@ export default class Counter extends Plugin {
 		const file = this.app.workspace.getActiveFile();
 		if (!file) return;
 
-		const update_time = new Date();
-		if (update_time.getTime() - this.last_update_time.getTime() < 100) return;
+		// const update_time = new Date();
+		// if (update_time.getTime() - this.last_update_time.getTime() < 100) return;
 
 		const modes = this.findModes(trigger)
 
@@ -129,13 +140,12 @@ export default class Counter extends Plugin {
 			const mode = modes[key];
 			if (!mode.auto) continue;
 
-
 			if (await this.updateYamlFrontMatter(mode)) {
 				this.last_update = { name: mode.name, file_path: file.path }
 			}
 		}
 
-		this.last_update_time = new Date();
+		// this.last_update_time = new Date();
 	}
 
 
@@ -234,7 +244,7 @@ export default class Counter extends Plugin {
 					if (editor) editor.replaceRange(new_line, rangeFrom, rangeTo);
 					return;
 				}
-			} 
+			}
 			// else {
 			// 	const insertPos = yamlLinesLen - 1;
 			// 	const rangeFrom = { line: insertPos, ch: 0 };
@@ -262,16 +272,13 @@ export default class Counter extends Plugin {
 			return;
 		}
 
-		function readFrontmatter() {
-			return yaml[metadata_name];
-		}
 
 		function arraysEqual(a: string[], b: string[]) {
 			if (a.length !== b.length) return false;
 			return a.every((element, index) => element === b[index] && index === b.indexOf(element));
 		}
 
-		const current_value = await readFrontmatter();
+		const current_value = await yaml[metadata_name];
 
 		let sucsess = false;
 
@@ -284,13 +291,12 @@ export default class Counter extends Plugin {
 
 				await updateFrontmatter(new_value.toString());
 
-				const updated_value = await readFrontmatter();
+				const updated_value = await yaml[metadata_name];
 				sucsess = updated_value != null ? parseInt(updated_value) == new_value : false;
 
 				if (sucsess && mode.notify)
 					new Notice('Counter\n' + metadata_name + ': +1');
 			}
-
 				break;
 
 			case 'add_date': {
@@ -315,7 +321,7 @@ export default class Counter extends Plugin {
 				const new_value = '[' + new_dates.join(', ') + ']';
 				await updateFrontmatter(new_value);
 
-				const updated_value = await readFrontmatter();
+				const updated_value = await yaml[metadata_name];
 				sucsess = updated_value != null ? arraysEqual(updated_value, new_dates) : false;
 
 				if (sucsess && mode.notify)
@@ -326,16 +332,18 @@ export default class Counter extends Plugin {
 			case 'word_count': {
 				if (current_value == null && !mode.auto) return false;
 
-				const current_value_ = current_value != null ? parseInt(current_value) : 0;
+				const current_count = current_value != null ? parseInt(current_value) : 0;
 				const new_value = await this.countWords(content.substring(content.indexOf('\n---\n')));
+
+				if (current_count == new_value) return false;
 
 				await updateFrontmatter(new_value.toString());
 
-				const updated_value = await readFrontmatter();
+				const updated_value = await yaml[metadata_name];
 				sucsess = updated_value != null ? parseInt(updated_value) == new_value : false;
 
 				if (sucsess && mode.notify)
-					new Notice('Counter\n' + metadata_name + ': ' + (current_value_ > 1 ? current_value_ + ' -> ' : '') + new_value);
+					new Notice('Counter\n' + metadata_name + ': ' + (current_count > 1 ? current_count + ' -> ' : '') + new_value);
 			}
 				break;
 
