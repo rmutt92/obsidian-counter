@@ -1,6 +1,14 @@
 # Obsidian - Counter
 
-Counter is an Obsidian plugin that provides a simple counter of page views, editting dates, and word counts for metadata in YAML frontmatter.
+Counter is a simple Obsidian plugin that provides a counter of page views, editing dates, and word counts for metadata in YAML frontmatter.
+
+```
+---
+views: 8
+edits: [2023-03-16, 2023-04-01]
+words: 123
+---
+```
 
 ## Features
 
@@ -20,9 +28,9 @@ Counter is an Obsidian plugin that provides a simple counter of page views, edit
 
 Counter supports three default counters:
 
-1. View Counter - Counts the number of times a file has been opened
-2. Edit Date Logger - Records the date the file was last edited
-3. Word Counter - Counts the total number of words in a page
+1. View Counter: Counts the number of times a file has been opened.
+2. Edit Date Logger: Records the dates the file was edited.
+3. Word Counter: Counts the total number of words in a page.
 
 ### Custom Counters
 
@@ -30,8 +38,7 @@ Counter also supports to have custom counters. Count anything you want.
 
 ## Settings
 
-- Folders to Ignore
-	You can set directories to prevent automatic updates.
+- **Folders to Ignore**: You can set directories to prevent automatic updates.
 
 ## Usage
 
@@ -48,14 +55,10 @@ words:
 Make sure that you have added the same key as you configured in the settings panel of Counter.
 Once the metadata key is added, the plugin is readly to automatically track the number of page views, edits, and words for that note. 
 
-i.e.
-```
----
-views: 8
-edits: [2023-03-16, 2023-04-01]
-words: 123
----
-```
+## Limitation
+- Reading view is not supported.
+- Nested key is not supported.
+- Automatic creation of a metadata key in YAML frontmatter is not supported.
 
 ## Contributing
 
