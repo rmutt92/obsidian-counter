@@ -1,12 +1,12 @@
 # Obsidian - Counter
 
-Counter is an Obsidian plugin that provides a simple counter of page views, edits, and words for metadata in YAML frontmatter.
+Counter is an Obsidian plugin that provides a simple counter of page views, editting dates, and word counts for metadata in YAML frontmatter.
 
 ## Features
 
-- Automatic updating of YAML frontmatter metadata for selected events such as opening a file or making an edit
-- Customizable settings such as enabling/disabling automatic updating, defining the metadata key, specifying the trigger event, creating new metadata, and turning on/off notifications
-- Option to add custom counters with a specified count type such as counting up or down, adding the current date to a list, or counting words
+- Automatic updating of YAML front matter metadata for selected events, such as opening a file or making an edit. Hotkey command is supported.
+- Customizable settings such as enabling/disabling automatic updating, name of the metadata key, specifying the trigger event, and turning on/off notifications.
+- Option to add custom counters with a specified count type such as counting up or down, adding the current date to a list, or counting words of the page.
 
 ## Installation
 
@@ -30,25 +30,33 @@ Counter also supports to have custom counters. Count anything you want.
 
 ## Settings
 
-This plugin has several settings that allow users to customize its behavior. These settings can be accessed by clicking on the "Counter" tab in the Obsidian settings panel.
+- Folders to Ignore
+	You can set directories to prevent automatic updates.
 
 ## Usage
 
-To use the Counter plugin, simply open any note and add the following YAML frontmatter:
-
+To use the Counter plugin, simply add those metadata key YAML frontmatter:
+Of course, you can name those as you'd like.
 ```
 ---
-views: 1
-edits: [2023-03-26]
-words: 0
+views: 
+edits: 
+words: 
 ---
 ```
 
-Once the frontmatter is added, the plugin will automatically track the number of page views, edits, and words for that note. To view the count for a particular note, simply hover over the note in the file explorer and the count will be displayed in a tooltip.
+Make sure that you have added the same key as you configured in the settings panel of Counter.
+Once the metadata key is added, the plugin is readly to automatically track the number of page views, edits, and words for that note. 
+
+i.e.
+```
+---
+views: 8
+edits: [2023-03-16, 2023-04-01]
+words: 123
+---
+```
 
 ## Contributing
 
-The Counter plugin is open source and contributions are welcome. If you would like to contribute, please submit a pull request with your changes.
-
-
-[☕️](https://www.buymeacoffee.com/rmutt1992m)
+The Counter plugin is open source, and contributions are welcome. If you would like to contribute, please submit a pull request with your changes, or pitch me the wonderful idea. [☕️](https://www.buymeacoffee.com/rmutt1992m)

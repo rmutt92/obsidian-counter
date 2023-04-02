@@ -117,15 +117,6 @@ export default class Counter extends Plugin {
 
 		}
 
-
-		// const saveCommandDefinition = (this.app as any).commands?.commands?.[ 'editor:save-file' ];
-
-		// const save = saveCommandDefinition?.callback;
-
-		// if (typeof save === 'function') {
-		// 	saveCommandDefinition.callback = () => {  this.updateCounter('save-file'); };
-		// }
-
 	}
 
 	async updateCounterCommand(mode: CounterMode) {
@@ -243,28 +234,12 @@ export default class Counter extends Plugin {
 
 					if (line.indexOf(metadata_name + ':') != 0) continue;
 
-					// for (let j = i + 1, size = lines.length; j < size; j++) {
-					// 	if (line_pos < 0) {
-					// 		const line2 = lines[j];
-					// 		const comma_pos = line2.indexOf(': ');
-
-					// 		if (comma_pos > 0 && !line.substring(0, comma_pos).includes(' ')) {
-					// 			// Next metadata found
-					// 			line_end_pos = j;
-					// 		}
-					// 	}
-					// }
-
 					line_pos = i;
 
-					// const next_metadata_found = line_end_pos > -1;
 
 					const rangeFrom = { line: line_pos + 1, ch: 0 };
 					const rangeTo = { line: line_pos + 2, ch: 0 };
-					// const rangeTo = next_metadata_found ? { line: line_end_pos+1, ch: 0} : { line: line_pos+2, ch: 0 };
-
-					// editor.replaceRange(metadata_name + ': ' + new_value, rangeFrom, rangeTo);d
-
+					
 					const new_line = metadata_name + ': ' + new_value + '\n';
 
 					// make sure that they are considered one change so that undo will only need to happen once for a multicursor paste
@@ -284,16 +259,6 @@ export default class Counter extends Plugin {
 			// 	// make sure that they are considered one change so that undo will only need to happen once for a multicursor paste
 			// 	// W.I.P It doesn't work properly
 			// 	// if (editor) editor.replaceRange(new_line, rangeFrom, rangeTo);
-
-			// }
-
-			// try {
-			// 	fileManager.processFrontMatter(file, (frontmatter) => {
-			// 		// Modify the frontmatter object here
-			// 		frontmatter[metadata_name] = new_value;
-			// 	});
-			// } catch (error) {
-			// 	console.error(`Error modifying frontmatter for ${file.path}:`, error);
 			// }
 
 			return;
