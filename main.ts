@@ -13,6 +13,7 @@ interface CounterMode {
 interface CounterSettings {
 	counterModeList: CounterMode[];
 	customCounterModeList: CounterMode[];
+	ignorePaths: string[];
 }
 
 const counterTriggerList = ['Open File', 'Modify', 'Command'];
@@ -51,7 +52,7 @@ const DEFAULT_SETTINGS: CounterSettings = {
 
 	customCounterModeList: [
 		{
-			title: 'Rating Logger',
+			title: '',
 			name: 'ratings',
 			trigger: 'Command',
 			type: 'count_up',
@@ -59,7 +60,9 @@ const DEFAULT_SETTINGS: CounterSettings = {
 			create: false,
 			notify: false
 		}
-	]
+	],
+
+	ignorePaths: []
 };
 
 export default class Counter extends Plugin {
@@ -86,10 +89,8 @@ export default class Counter extends Plugin {
 		this.addSettingTab(new CounterSettingTab(this.app, this));
 
 		// This adds a simple command that can be triggered anywhere
-		const allModes = [this.settings.counterModeList, this.settings.customCounterModeList].flat();
-
-		for (const key in allModes) {
-			const mode = allModes[key];
+		for (const key in this.settings.counterModeList) {
+			const mode = this.settings.counterModeList[key];
 			if (mode.trigger != 'Command') continue;
 
 			this.addCommand({
@@ -101,9 +102,24 @@ export default class Counter extends Plugin {
 			});
 		}
 
+		for (const key in this.settings.customCounterModeList) {
+			const mode = this.settings.customCounterModeList[key];
+			if (mode.trigger != 'Command') continue;
+
+			this.addCommand({
+				id: 'counter-' + mode.name,
+				name: 'Update | ' + mode.name + ':',
+				callback: () => {
+					this.updateCounterCommand(mode);
+				}
+			});
+
+
+		}
+
 
 		// const saveCommandDefinition = (this.app as any).commands?.commands?.[ 'editor:save-file' ];
-		
+
 		// const save = saveCommandDefinition?.callback;
 
 		// if (typeof save === 'function') {
@@ -118,7 +134,7 @@ export default class Counter extends Plugin {
 
 		const file = await this.app.workspace.getActiveFile();
 		if (!file) return;
-		
+
 		if (await this.updateYamlFrontMatter(mode)) {
 			this.last_update = { name: mode.name, file_path: file.path }
 		}
@@ -130,6 +146,12 @@ export default class Counter extends Plugin {
 	async updateCounter(trigger: string) {
 		const file = this.app.workspace.getActiveFile();
 		if (!file) return;
+
+		// Check Ignore Folder
+		for (const key in this.settings.ignorePaths) {
+			const path = this.settings.ignorePaths[key];
+			if (path && path != '' && file.path.indexOf(path) == 0) return;
+		}
 
 		// const update_time = new Date();
 		// if (update_time.getTime() - this.last_update_time.getTime() < 100) return;
@@ -186,7 +208,12 @@ export default class Counter extends Plugin {
 		const yaml = parseYaml(match[1]);
 		const metadataExists = metadata_name in yaml;
 
-		if (!metadataExists && !mode.create) return false;
+
+		if (!metadataExists && !mode.create) {
+			if (mode.trigger == 'Command')
+				new Notice('Counter\n' + 'Not Found Metadata key\n' + metadata_name);
+			return false;
+		}
 
 		const yamlExists = match != null;
 
@@ -390,32 +417,117 @@ class CounterSettingTab extends PluginSettingTab {
 		for (const key in this.plugin.settings.counterModeList) {
 			const counter_mode = this.plugin.settings.counterModeList[key];
 			this.addSettingPanel(containerEl, counter_mode, false)
+			containerEl.createEl('br');
 		}
 
-		containerEl.createEl('br');
 		containerEl.createEl('br');
 		containerEl.createEl('h1', { text: 'Custom Counters' });
 
 		for (const key in this.plugin.settings.customCounterModeList) {
 			const counter_mode = this.plugin.settings.customCounterModeList[key];
 			this.addSettingPanel(containerEl, counter_mode, true)
+			containerEl.createEl('br');
 		}
+
+		this.addCustomCounter(containerEl);
+
+		containerEl.createEl('br');
+		containerEl.createEl('h1', { text: 'Options' });
+		containerEl.createEl('br');
+
+		const ignoreFolders = this.plugin.settings.ignorePaths.join('\n')
+
+		new Setting(containerEl)
+			.setName('Folders to Ignore')
+			.setDesc('Files in these folders are ignored when the automatic counter update runs. Enter folder paths separated by new line.')
+			.addTextArea(text => text
+				.setPlaceholder('Templates')
+				.setValue(ignoreFolders)
+				.onChange(async (value) => {
+					this.plugin.settings.ignorePaths = value.split('\n').filter(i => i !== '' && i !== null);
+					await this.plugin.saveSettings();
+				}));
 
 		containerEl.createEl('br');
 		containerEl.createEl('br');
-		containerEl.createEl('h2', { text: 'Notes:' });
+		containerEl.createEl('h1', { text: 'Notes' });
+		containerEl.createEl('li', { text: 'Please add the metadata key in YAML frontmatter manually.' });
+		containerEl.createEl('li', { text: 'Make sure that the metadata is NOT duplicated in the YAML front matter. It can gets buggy.' });
 		containerEl.createEl('li', { text: 'Nested key is not supported yet.' });
+		containerEl.createEl('li', { text: 'The developer of this plugin is obsessed with Obsidian and ' }).createEl('a', { text: '☕.', href: 'https://www.buymeacoffee.com/rmutt1992m'});
+
+		const greetings = [
+			"Have a nice day!",
+			"Have a nice counting!",
+			"Hope you found this helpful!",
+			"Wishing you a great day!",
+			"Keep up the good work!",
+			"Have a fantastic day!",
+			"Take care and stay safe!",
+			"Sending you good vibes!",
+			"Best wishes to you!",
+			"Good day!",
+			"Thanks for your support!",
+			"You're the best!",
+			"Take it easy!",
+			"May your day be filled with joy!",
+			"Stay positive and have a great day!",
+			"Sending positive energy your way!",
+			"Have a blessed day!",
+			"Wishing you a wonderful day!",
+			"Have a beautiful day!",
+			"Hope your day is as wonderful as you are!",
+			"Keep smiling and have a great day!",
+			"Enjoy every moment of your day!",
+			"Have a marvelous day!",
+			"May your day be full of happiness and peace!",
+			"Hope your day is filled with smiles!",
+			"Cheers to a wonderful day!",
+			"May the Force be with you.",
+			"Buy me a coffin!",
+			// Spanish
+			"¡Que tengas un buen día!",
+			"¡Que tengas un buen conteo!",
+			// French
+			"Bonne journée !",
+			"Bon dénombrement !",
+			// German
+			"Einen schönen Tag noch!",
+			"Einen schönen Zählvorgang noch!",
+			// Portuguese
+			"Tenha um bom dia!",
+			"Tenha uma boa contagem!",
+			// Russian
+			"Хорошего дня!",
+			"Хорошего подсчета!",
+			// Chinese (Simplified)
+			"祝你有个愉快的一天！",
+			"愉快的计数！",
+			// Japanese
+			"あざます！",
+			"良いカウントを！",
+			// Korean
+			"좋은 하루 되세요!",
+			"좋은 계산 되세요!",
+			// Hindi
+			"अच्छा दिन हो!",
+			"अच्छी गणना हो!"
+			];
+			
+		containerEl.createEl('li', { text:  greetings[Math.floor(Math.random() * greetings.length)]});
+
 
 	}
 
 	private addSettingPanel(containerEl: HTMLElement, counter_mode: CounterMode, isCustom: boolean) {
-		containerEl.createEl('br');
-		containerEl.createEl('h2', { text: counter_mode.title });
 
+		containerEl.createEl('br');
+		containerEl.createEl('h2', { text: isCustom ? counter_mode.name + ':' : counter_mode.title });
+		
 		// if (!counter_mode.auto) return;
 		new Setting(containerEl)
 			.setName('Enable')
-			.setDesc('Update the metadata automatically.')
+			.setDesc('Update the metadata automatically. You can still find the command when it\'s disabled.')
 			.addToggle(cb => cb
 				.setValue(counter_mode.auto)
 				.onChange(async (value) => {
@@ -427,7 +539,7 @@ class CounterSettingTab extends PluginSettingTab {
 		if (!counter_mode.auto) return;
 		new Setting(containerEl)
 			.setName('Metadata Key')
-			.setDesc('This is a key/name for the metadata in YAML front matter.')
+			.setDesc('This is a key/name for the metadata in YAML frontmatter.')
 			.addText(text => text
 				.setPlaceholder('Name view counter')
 				.setValue(counter_mode.name)
@@ -436,6 +548,7 @@ class CounterSettingTab extends PluginSettingTab {
 					res_value = res_value.replace(/:/g, '');
 					counter_mode.name = res_value;
 					await this.plugin.saveSettings();
+					// this.display();
 				}));
 
 		new Setting(containerEl)
@@ -491,6 +604,40 @@ class CounterSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 					await this.display();
 				}));
+
+		if (isCustom) {
+			new Setting(containerEl)
+				.addButton(cb => cb
+					.setButtonText('-')
+					.onClick(async () => {
+						this.plugin.settings.customCounterModeList = this.plugin.settings.customCounterModeList.filter(i => i != counter_mode);
+						await this.plugin.saveSettings();
+						await this.display();
+					}))
+
+		}
+	}
+
+	private addCustomCounter(containerEl: HTMLElement,) {
+		new Setting(containerEl)
+			.setName('Create New Counter')
+			.addButton(cb => cb
+				.setButtonText('+')
+				.onClick(async (value) => {
+					this.plugin.settings.customCounterModeList.push(
+						{
+							title: '',
+							name: 'new_counter',
+							trigger: 'Command',
+							type: 'count_up',
+							auto: true,
+							create: false,
+							notify: false
+						}
+					)
+					await this.plugin.saveSettings();
+					await this.display();
+				}))
 	}
 }
 
