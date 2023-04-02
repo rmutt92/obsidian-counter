@@ -469,7 +469,6 @@ class CounterSettingTab extends PluginSettingTab {
 			"Good day!",
 			"Thanks for your support!",
 			"You're the best!",
-			"Take it easy!",
 			"May your day be filled with joy!",
 			"Stay positive and have a great day!",
 			"Sending positive energy your way!",
@@ -487,36 +486,26 @@ class CounterSettingTab extends PluginSettingTab {
 			"Buy me a coffin!",
 			// Spanish
 			"¡Que tengas un buen día!",
-			"¡Que tengas un buen conteo!",
 			// French
 			"Bonne journée !",
-			"Bon dénombrement !",
 			// German
 			"Einen schönen Tag noch!",
-			"Einen schönen Zählvorgang noch!",
 			// Portuguese
 			"Tenha um bom dia!",
-			"Tenha uma boa contagem!",
 			// Russian
 			"Хорошего дня!",
-			"Хорошего подсчета!",
 			// Chinese (Simplified)
 			"祝你有个愉快的一天！",
-			"愉快的计数！",
 			// Japanese
 			"あざます！",
 			"良いカウントを！",
 			// Korean
 			"좋은 하루 되세요!",
-			"좋은 계산 되세요!",
 			// Hindi
 			"अच्छा दिन हो!",
-			"अच्छी गणना हो!"
 			];
 			
 		containerEl.createEl('li', { text:  greetings[Math.floor(Math.random() * greetings.length)]});
-
-
 	}
 
 	private addSettingPanel(containerEl: HTMLElement, counter_mode: CounterMode, isCustom: boolean) {
