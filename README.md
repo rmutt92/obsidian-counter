@@ -28,9 +28,9 @@ words: 123
 
 Counter supports three default counters:
 
-1. View Counter: Counts the number of times a file has been opened.
-2. Edit Date Logger: Records the dates the file was edited.
-3. Word Counter: Counts the total number of words in a page.
+1. **View Counter**: Counts the number of times a file has been opened.
+2. **Edit Date Logger**: Records the dates the file was edited.
+3. **Word Counter**: Counts the total number of words in a page.
 
 ### Custom Counters
 
@@ -62,4 +62,4 @@ Once the metadata key is added, the plugin is readly to automatically track the 
 
 ## Contributing
 
-The Counter plugin is open source, and contributions are welcome. If you would like to contribute, please submit a pull request with your changes, or pitch me the wonderful idea. [☕️](https://www.buymeacoffee.com/rmutt1992m)
+The Counter plugin is open source, and contributions are welcome. If you would like to contribute, please submit a pull request with your changes, or pitch me the wonderful idea. This plugin and the developper is fueled by [☕️](https://www.buymeacoffee.com/rmutt1992m)
