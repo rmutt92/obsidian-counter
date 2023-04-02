@@ -42,7 +42,7 @@ Counter also supports to have custom counters. Count anything you want.
 
 ## Usage
 
-To use the Counter plugin, simply add those metadata key YAML frontmatter:
+To use Counter, simply add those metadata key YAML frontmatter:
 Of course, you can name those as you'd like.
 ```
 ---
@@ -60,6 +60,6 @@ Once the metadata key is added, the plugin is readly to automatically track the 
 - Nested key is not supported.
 - Automatic creation of a metadata key in YAML frontmatter is not supported.
 
-## Contributing
+## Contribution
 
-The Counter plugin is open source, and contributions are welcome. If you would like to contribute, please submit a pull request with your changes, or pitch me the wonderful idea. This plugin and the developper is fueled by [☕️](https://www.buymeacoffee.com/rmutt1992m)
+Counter is open source, and contributions are welcome. If you would like to contribute, please submit a pull request with your changes, or pitch me the wonderful idea. This plugin and the developper is fueled by [☕️](https://www.buymeacoffee.com/rmutt1992m)
