@@ -77,6 +77,7 @@ export default class Counter extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
+		// on
 		for (const key in counterTriggerList) {
 			const trigger = counterTriggerList[key];
 			this.app.workspace.on(trigger as "quit", async () => { this.updateCounter(trigger); })
@@ -353,7 +354,13 @@ export default class Counter extends Plugin {
 	}
 
 	onunload() {
+		// off
+		for (const key in counterTriggerList) {
+			const trigger = counterTriggerList[key];
+			this.app.workspace.off(trigger as "quit", async () => { this.updateCounter(trigger); })
+		}
 
+		this.app.workspace.off('file-open', () => { this.updateCounter('Open File'); })
 	}
 
 	async loadSettings() {
