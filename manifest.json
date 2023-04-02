@@ -3,7 +3,7 @@
 	"name": "Counter",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Simple counter of pageviews, edits, and words for metadata in YAML frontmatter.",
+	"description": "Simple counter of page views, edit dates, and words for metadata in YAML frontmatter.",
 	"author": "Obsidian",
 	"authorUrl": "https://www.buymeacoffee.com/rmutt1992m",
 	"fundingUrl": "https://www.buymeacoffee.com/rmutt1992m",
