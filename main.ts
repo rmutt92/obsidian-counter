@@ -418,7 +418,8 @@ class CounterSettingTab extends PluginSettingTab {
 		containerEl.createEl('h1', { text: 'Notes' });
 		containerEl.createEl('li', { text: 'Please add the metadata key in YAML frontmatter manually.' });
 		containerEl.createEl('li', { text: 'Make sure that the metadata is NOT duplicated in the YAML front matter. It can gets buggy.' });
-		containerEl.createEl('li', { text: 'Nested key is not supported yet.' });
+		containerEl.createEl('li', { text: 'Reading view is not supported.' });
+		containerEl.createEl('li', { text: 'Nested key is not supported.' });
 		containerEl.createEl('li', { text: 'The developer of this plugin is obsessed with Obsidian and ' }).createEl('a', { text: '☕.', href: 'https://www.buymeacoffee.com/rmutt1992m'});
 
 		const greetings = [

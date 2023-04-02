@@ -1,0 +1,8 @@
+{
+	"id": "obsidian-counter",
+	"name": "Counter",
+    "author": "R.Mutt",
+	"description": "Simple counter of page views, edit dates, and words for metadata in YAML frontmatter.",
+    "repo": "rmutt92/obsidian-counter",
+    "branch": "main"
+  }
