@@ -1,5 +1,5 @@
 {
-	"id": "obsidian-counter",
+	"id": "counter",
 	"name": "Counter",
     "author": "R.Mutt",
 	"description": "Counter for metadata in YAML frontmatter.",
