@@ -1,3 +1,4 @@
+import { write } from 'fs';
 import { App, Editor, MarkdownView, Notice, Plugin, PluginSettingTab, Setting, parseYaml } from 'obsidian';
 
 interface CounterMode {
@@ -17,7 +18,7 @@ interface CounterSettings {
 }
 
 const counterTriggerList = ['Open File', 'Modify', 'Command'];
-const counterTypeList = ['count_up', 'count_down', 'add_date', 'word_count'];
+const counterTypeList = ['count_up', 'count_down', 'add_date', 'update_date', 'word_count'];
 
 const DEFAULT_SETTINGS: CounterSettings = {
 	counterModeList: [
@@ -68,22 +69,20 @@ const DEFAULT_SETTINGS: CounterSettings = {
 export default class Counter extends Plugin {
 	settings: CounterSettings;
 
-	private readonly triggerList = ['Open File', 'editor-change'];
-
 	private last_update = { name: '', file_path: '' };
-
 	private last_update_time = new Date(0);
 
 	async onload() {
 		await this.loadSettings();
 
 		// on
-		for (const key in counterTriggerList) {
-			const trigger = counterTriggerList[key];
-			this.app.workspace.on(trigger as "quit", async () => { this.updateCounter(trigger); })
-		}
-
+		// for (const key in counterTriggerList) {
+		// 	const trigger = counterTriggerList[key];
+		// 	this.app.workspace.on(trigger as "quit", async () => { this.updateCounter(trigger); })
+		// }
+		
 		this.app.workspace.on('file-open', () => { this.updateCounter('Open File'); })
+		// this.app.workspace.on('active-leaf-change', () => { this.updateCounter('Active Leaf Change'); })
 		this.registerEvent(this.app.vault.on('modify', () => { this.updateCounter('Modify'); }));
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
@@ -114,28 +113,18 @@ export default class Counter extends Plugin {
 					this.updateCounterCommand(mode);
 				}
 			});
-
-
 		}
-
 	}
 
-	async updateCounterCommand(mode: CounterMode) {
-		// const update_time = new Date();
-		// if (update_time.getTime() - this.last_update_time.getTime() < 100) return;
-
-		const file = await this.app.workspace.getActiveFile();
+	private async updateCounterCommand(mode: CounterMode) {
+		const file = this.app.workspace.getActiveFile();
 		if (!file) return;
 
-		if (await this.updateYamlFrontMatter(mode)) {
-			this.last_update = { name: mode.name, file_path: file.path }
-		}
-
-		// this.last_update_time = new Date();
+		await this.updateYamlFrontMatter(mode);
 	}
 
+	private async updateCounter(trigger: string) {
 
-	async updateCounter(trigger: string) {
 		const file = this.app.workspace.getActiveFile();
 		if (!file) return;
 
@@ -154,14 +143,9 @@ export default class Counter extends Plugin {
 			const mode = modes[key];
 			if (!mode.auto) continue;
 
-			if (await this.updateYamlFrontMatter(mode)) {
-				this.last_update = { name: mode.name, file_path: file.path }
-			}
+			this.updateYamlFrontMatter(mode);
 		}
-
-		// this.last_update_time = new Date();
 	}
-
 
 	private findModes(trigger: string): CounterMode[] {
 		const res = [];
@@ -183,7 +167,7 @@ export default class Counter extends Plugin {
 
 	private async updateYamlFrontMatter(mode: CounterMode): Promise<boolean> {
 
-		const file = await this.app.workspace.getActiveFile();
+		const file = this.app.workspace.getActiveFile();
 		if (!file) return false;
 
 		const content = await this.app.vault.read(file);
@@ -192,14 +176,13 @@ export default class Counter extends Plugin {
 		const metadata_name = mode.name;
 
 		const frontMatterRegex = /---\n([\s\S]*?)\n---\n/;
-		const match = content.match(frontMatterRegex);
+		const yamlLines = content.match(frontMatterRegex);
 		const firstLinePos = content.indexOf('---\n');
 
-		if (!match) return false;
+		if (!yamlLines) return false;
 
-		const yaml = parseYaml(match[1]);
+		const yaml = parseYaml(yamlLines[1]);
 		const metadataExists = metadata_name in yaml;
-
 
 		if (!metadataExists && !mode.create) {
 			if (mode.trigger == 'Command')
@@ -207,24 +190,20 @@ export default class Counter extends Plugin {
 			return false;
 		}
 
-		const yamlExists = match != null;
-
+		const yamlExists = yamlLines != null;
 		if (!yamlExists && !mode.create) return false;
 
-		const editor = await this.getEditor();
+		const editor = this.getEditor();
 		if (!editor) return false;
 
 		const cursorPos = editor.getCursor('head');
-		const lines = match ? match[1].split('\n') : [''];
+		const lines = yamlLines ? yamlLines[1].split('\n') : [''];
 		const yamlLinesLen = firstLinePos + lines.length + 2;
 
 		if (cursorPos.line < yamlLinesLen) return false;
 
-		// const fileManager = this.app.fileManager;
-
-		function updateFrontmatter(new_value: string) {
-
-			const lines = match ? match[1].split('\n') : [''];
+		function updateFrontmatter(new_value: string): boolean {
+			const lines = yamlLines ? yamlLines[1].split('\n') : [''];
 
 			if (metadataExists) {
 				let line_pos = -1;
@@ -237,17 +216,18 @@ export default class Counter extends Plugin {
 
 					line_pos = i;
 
-
 					const rangeFrom = { line: line_pos + 1, ch: 0 };
 					const rangeTo = { line: line_pos + 2, ch: 0 };
-					
+
 					const new_line = metadata_name + ': ' + new_value + '\n';
 
-					// make sure that they are considered one change so that undo will only need to happen once for a multicursor paste
-					if (editor) editor.replaceRange(new_line, rangeFrom, rangeTo);
-					return;
+					if (!editor) return false;
+					
+					editor.replaceRange(new_line, rangeFrom, rangeTo);
+					return true;
 				}
 			}
+
 			// else {
 			// 	const insertPos = yamlLinesLen - 1;
 			// 	const rangeFrom = { line: insertPos, ch: 0 };
@@ -257,21 +237,19 @@ export default class Counter extends Plugin {
 			// 	// editor.replaceRange(metadata_name + ': ' + new_value, rangeFrom, rangeTo);d
 			// 	const new_line = metadata_name + ': ' + new_value + '\n---\n';
 
-			// 	// make sure that they are considered one change so that undo will only need to happen once for a multicursor paste
 			// 	// W.I.P It doesn't work properly
 			// 	// if (editor) editor.replaceRange(new_line, rangeFrom, rangeTo);
 			// }
 
-			return;
+			return false;
 		}
-
-
+		
 		function arraysEqual(a: string[], b: string[]) {
 			if (a.length !== b.length) return false;
 			return a.every((element, index) => element === b[index] && index === b.indexOf(element));
 		}
 
-		const current_value = await yaml[metadata_name];
+		const current_value = yaml[metadata_name];
 
 		let sucsess = false;
 
@@ -282,11 +260,8 @@ export default class Counter extends Plugin {
 
 				const new_value = current_value != null ? parseInt(current_value) + (mode.type == 'count_up' ? 1 : -1) : 1;
 
-				await updateFrontmatter(new_value.toString());
-
-				const updated_value = await yaml[metadata_name];
-				sucsess = updated_value != null ? parseInt(updated_value) == new_value : false;
-
+				sucsess = updateFrontmatter(new_value.toString());
+				
 				if (sucsess && mode.notify)
 					new Notice('Counter\n' + metadata_name + ': +1');
 			}
@@ -312,28 +287,38 @@ export default class Counter extends Plugin {
 				new_dates = new_dates.filter((item) => item !== undefined && item !== null) as string[];
 
 				const new_value = '[' + new_dates.join(', ') + ']';
-				await updateFrontmatter(new_value);
-
-				const updated_value = await yaml[metadata_name];
-				sucsess = updated_value != null ? arraysEqual(updated_value, new_dates) : false;
+				sucsess = updateFrontmatter(new_value);
 
 				if (sucsess && mode.notify)
 					new Notice('Counter\n' + metadata_name + ': +' + currentDate);
 			}
 				break;
 
+			case 'update_date': {
+				if (current_value == null && !mode.auto) return false;
+
+				const currentDate = new Date().toISOString().split('T')[0];
+
+				if (current_value != null) {
+					if (current_value == currentDate) return false;
+				}
+
+				sucsess = updateFrontmatter(currentDate);
+				if (sucsess && mode.notify)
+					new Notice('Counter\n' + metadata_name + ': ' + currentDate);
+			}
+
+				break;
+
 			case 'word_count': {
 				if (current_value == null && !mode.auto) return false;
 
 				const current_count = current_value != null ? parseInt(current_value) : 0;
-				const new_value = await this.countWords(content.substring(content.indexOf('\n---\n')));
+				const new_value = this.countWords(content.substring(content.indexOf('\n---\n')));
 
 				if (current_count == new_value) return false;
 
-				await updateFrontmatter(new_value.toString());
-
-				const updated_value = await yaml[metadata_name];
-				sucsess = updated_value != null ? parseInt(updated_value) == new_value : false;
+				sucsess = updateFrontmatter(new_value.toString());
 
 				if (sucsess && mode.notify)
 					new Notice('Counter\n' + metadata_name + ': ' + (current_count > 1 ? current_count + ' -> ' : '') + new_value);
@@ -355,12 +340,13 @@ export default class Counter extends Plugin {
 
 	onunload() {
 		// off
-		for (const key in counterTriggerList) {
-			const trigger = counterTriggerList[key];
-			this.app.workspace.off(trigger as "quit", async () => { this.updateCounter(trigger); })
-		}
+		// for (const key in counterTriggerList) {
+		// 	const trigger = counterTriggerList[key];
+		// 	this.app.workspace.off(trigger as "quit", async () => { this.updateCounter(trigger); })
+		// }
 
 		this.app.workspace.off('file-open', () => { this.updateCounter('Open File'); })
+		// this.app.workspace.off('active-leaf-change', () => { this.updateCounter('Active Leaf Change'); })
 	}
 
 	async loadSettings() {
@@ -427,7 +413,7 @@ class CounterSettingTab extends PluginSettingTab {
 		containerEl.createEl('li', { text: 'Make sure that the metadata is NOT duplicated in the YAML front matter. It can gets buggy.' });
 		containerEl.createEl('li', { text: 'Reading view is not supported.' });
 		containerEl.createEl('li', { text: 'Nested key is not supported.' });
-		containerEl.createEl('li', { text: 'The developer of this plugin is obsessed with Obsidian and ' }).createEl('a', { text: '☕.', href: 'https://www.buymeacoffee.com/rmutt1992m'});
+		containerEl.createEl('li', { text: 'The developer of this plugin is obsessed with Obsidian and ' }).createEl('a', { text: '☕.', href: 'https://www.buymeacoffee.com/rmutt1992m' });
 
 		const greetings = [
 			"Have a nice day!",
@@ -476,16 +462,16 @@ class CounterSettingTab extends PluginSettingTab {
 			"좋은 하루 되세요!",
 			// Hindi
 			"अच्छा दिन हो!",
-			];
-			
-		containerEl.createEl('li', { text:  greetings[Math.floor(Math.random() * greetings.length)]});
+		];
+
+		containerEl.createEl('li', { text: greetings[Math.floor(Math.random() * greetings.length)] });
 	}
 
 	private addSettingPanel(containerEl: HTMLElement, counter_mode: CounterMode, isCustom: boolean) {
 
 		containerEl.createEl('br');
 		containerEl.createEl('h2', { text: isCustom ? counter_mode.name + ':' : counter_mode.title });
-		
+
 		// if (!counter_mode.auto) return;
 		new Setting(containerEl)
 			.setName('Enable')
