@@ -1,5 +1,4 @@
-import { write } from 'fs';
-import { App, Editor, MarkdownView, Notice, Plugin, PluginSettingTab, Setting, parseYaml } from 'obsidian';
+import { App, Editor, MarkdownFileInfo, Notice, Plugin, PluginSettingTab, Setting, parseYaml } from 'obsidian';
 
 interface CounterMode {
 	title: string,
@@ -84,6 +83,7 @@ export default class Counter extends Plugin {
 		this.app.workspace.on('file-open', () => { this.updateCounter('Open File'); })
 		// this.app.workspace.on('active-leaf-change', () => { this.updateCounter('Active Leaf Change'); })
 		this.registerEvent(this.app.vault.on('modify', () => { this.updateCounter('Modify'); }));
+		// this.registerEvent(this.app.vault.on('create', () => { this.updateCounter('Open File');}));
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new CounterSettingTab(this.app, this));
@@ -94,7 +94,7 @@ export default class Counter extends Plugin {
 			if (mode.trigger != 'Command') continue;
 
 			this.addCommand({
-				id: 'counter-' + mode.name,
+				id: mode.name,
 				name: mode.title,
 				callback: () => {
 					this.updateCounterCommand(mode);
@@ -107,7 +107,7 @@ export default class Counter extends Plugin {
 			if (mode.trigger != 'Command') continue;
 
 			this.addCommand({
-				id: 'counter-' + mode.name,
+				id: mode.name,
 				name: 'Update | ' + mode.name + ':',
 				callback: () => {
 					this.updateCounterCommand(mode);
@@ -160,8 +160,9 @@ export default class Counter extends Plugin {
 	}
 
 	private getEditor(): Editor | null {
-		const activeLeaf: MarkdownView | null = this.app.workspace.getActiveViewOfType(MarkdownView);
-		if (!activeLeaf) return null;
+		const activeLeaf: MarkdownFileInfo | null = this.app.workspace.activeEditor;
+		if (!activeLeaf || !activeLeaf.editor) return null;
+		
 		return activeLeaf.editor;
 	}
 
@@ -203,6 +204,7 @@ export default class Counter extends Plugin {
 		if (cursorPos.line < yamlLinesLen) return false;
 
 		function updateFrontmatter(new_value: string): boolean {
+			
 			const lines = yamlLines ? yamlLines[1].split('\n') : [''];
 
 			if (metadataExists) {
