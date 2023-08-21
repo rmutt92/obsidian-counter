@@ -218,8 +218,17 @@ export default class Counter extends Plugin {
 
 					line_pos = i;
 
-					const rangeFrom = { line: line_pos + 1, ch: 0 };
-					const rangeTo = { line: line_pos + 2, ch: 0 };
+					let idx = line_pos + 1;
+					let not_found = true;
+					const rangeFrom = { line: idx, ch: 0 };
+					while (not_found) {
+						if (lines[idx].startsWith('  - ')) {
+							idx += 1;
+						} else {
+							not_found = false;
+						}
+					}
+					const rangeTo = { line: idx + 1, ch: 0 };
 
 					const new_line = metadata_name + ': ' + new_value + '\n';
 
@@ -288,7 +297,7 @@ export default class Counter extends Plugin {
 
 				new_dates = new_dates.filter((item) => item !== undefined && item !== null) as string[];
 
-				const new_value = '[' + new_dates.join(', ') + ']';
+				const new_value = '\n  - ' + new_dates.join('\n  - ');
 				sucsess = updateFrontmatter(new_value);
 
 				if (sucsess && mode.notify)
